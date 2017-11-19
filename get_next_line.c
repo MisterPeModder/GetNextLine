@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye44@gmail.com>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/19 13:35:48 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/19 14:18:00 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/19 15:50:39 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,26 +14,39 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-static ssize_t	my_get_buffer(t_buffer *buffer)
+static int	gnl_append_buff(char **line, t_buffer *buff, int to_append)
 {
+	int		c;
 
+	c = 0;
+	while (c < to_append && buff->i + c < BUFF_SIZE)
+		if (buff->val[c++] == '\n')
 }
 
-int				get_next_line(const int fd, char **line)
+int			get_next_line(const int fd, char **line)
 {
-	static t_buffer	*buffer;
+	static t_buffer	*buff;
+	int				ret;
 	int				i;
 
-	if (!buff && ((t_buffer *)malloc(sizeof(t_buffer))))
-		return (-1);
-	while ((ret = read(fd, buff, BUFF_SIZE)) > 0)
+	if (!buff)
 	{
-		i = 0;
-		while (i < ret)
-		{
-			
-			++i;
-		}
+		if ((buff = (t_buffer *)malloc(sizeof(t_buffer))))
+			return (-1);
+		buff->i = 0;
 	}
+	ret = 1;
+	while (ret > 0)
+	{
+		if (buff->i == 0 && (ret = read(fd, buff->val)))
+	}
+
+	while (BUFF_SIZE - buff->i)
+	{
+		if ((ret = read(fd, buff->val + buff->i, size)) < 0)
+			return (-1);
+		
+	}
+	free(*buff);
 	return (ret);
 }
