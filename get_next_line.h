@@ -6,20 +6,22 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/17 12:59:21 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/19 14:50:26 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/24 00:59:20 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
 
-# define BUFF_SIZE 9999
+# define BUFF_SIZE 42
 
-typedef struct		s_buffer
+typedef struct		s_buff
 {
-	char[BUFF_SIZE]	val;
+	char			val[BUFF_SIZE];
 	int				i;
-}					t_buffer;
+	int				fd;
+	struct s_buff	*next;
+}					t_buff;
 
 int		get_next_line(const int fd, char **line);
 

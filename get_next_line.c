@@ -6,47 +6,92 @@
 /*   By: yguaye <yguaye44@gmail.com>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/19 13:35:48 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/19 15:50:39 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/24 01:15:37 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
 #include <unistd.h>
 #include <stdlib.h>
+#include "get_next_line.h"
+#include "libft.h"
 
-static int	gnl_append_buff(char **line, t_buffer *buff, int to_append)
+static t_buff	*gnl_buff(t_buff **beg, int fd)
 {
-	int		c;
+	t_buff	*buff;
 
-	c = 0;
-	while (c < to_append && buff->i + c < BUFF_SIZE)
-		if (buff->val[c++] == '\n')
+	if (beg && *beg)
+	{
+		buff = *beg;
+		while (buff)
+		{
+			if (buff->fd == fd)
+				return (buff);
+			buff = buff->next;
+		}
+	}
+	if (!(buff = (t_buff *)malloc(sizeof(t_buff))))
+		return (NULL);
+	buff->fd = fd;
+	buff->i = -1;
+	buff->next = NULL;
+	if (beg && *beg)
+		buff->next = *beg;
+	else
+		*beg = buff;
+	return (buff);
 }
 
-int			get_next_line(const int fd, char **line)
+static void		gnl_reset_buff(t_buff *buff)
 {
-	static t_buffer	*buff;
-	int				ret;
-	int				i;
+	while (buff->i > 0 && --buff->i >= 0)
+		buff->val[buff->i] = 0;
+}
 
-	if (!buff)
-	{
-		if ((buff = (t_buffer *)malloc(sizeof(t_buffer))))
-			return (-1);
-		buff->i = 0;
-	}
-	ret = 1;
-	while (ret > 0)
-	{
-		if (buff->i == 0 && (ret = read(fd, buff->val)))
-	}
+static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
+{
+	t_buff	*b;
 
-	while (BUFF_SIZE - buff->i)
+	if (*beg == buff)
+		ft_memdel((void **)beg);
+	else
 	{
-		if ((ret = read(fd, buff->val + buff->i, size)) < 0)
-			return (-1);
-		
+		b = *beg;
+		while (b->next && b->next != buff)
+			b = b->next;
+		if (b->next == buff)
+		{
+			b->next = buff->next;
+			free(buff);
+		}
 	}
-	free(*buff);
 	return (ret);
+}
+
+int				get_next_line(const int fd, char **line)
+{
+	static t_buff	*beg;
+	t_buff			*buff;
+	int				ret;
+	int				j;
+
+	if (!(buff = gnl_buff(&beg, fd)))
+		return (-1);
+	ret = 1;
+	*line = NULL;
+	while (buff->i != BUFF_SIZE)
+	{
+		if (buff->i == -1 || buff->i == 0)
+			if ((ret = read(fd, buff->val, BUFF_SIZE)) <= 0)
+				break ;
+		j = ++buff->i;
+		while (buff->i < BUFF_SIZE && buff->val[buff->i] != '\n')
+			++buff->i;
+		*line = *line ? ft_strjoin(*line, ft_strsub(buff->val, j, buff->i - j))
+			: ft_strsub(buff->val, j, buff->i - j);
+		if (buff->i != BUFF_SIZE)
+			return (1);
+		else if (ret != 0)
+			gnl_reset_buff(buff);
+	}
+	return (gnl_free_buff(ret, &beg, buff));
 }
