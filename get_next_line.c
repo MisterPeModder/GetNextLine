@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye44@gmail.com>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/19 13:35:48 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/29 15:18:34 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/29 16:05:49 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include "get_next_line.h"
 #include "libft.h"
+#include <stdio.h>
 
 static t_buff	*gnl_buff(t_buff **beg, int fd)
 {
@@ -48,6 +49,7 @@ static void		gnl_reset_buff(t_buff *buff)
 {
 	while (buff->i > 0 && --buff->i >= 0)
 		buff->val[buff->i] = 0;
+	buff->i = -1;
 }
 
 static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
@@ -70,6 +72,23 @@ static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
 	return (ret);
 }
 
+static void		gnl_join(t_buff *buff, char **line, int j)
+{
+	char	*nstr;
+	char	*tmp;
+
+	nstr = ft_strsub(buff->val, j, buff->i - j);
+	if (*line)
+	{
+		tmp = ft_strjoin(*line, nstr);
+		free(*line);
+		*line = tmp;
+		free(nstr);
+	}
+	else
+		*line = nstr;
+}
+
 int				get_next_line(const int fd, char **line)
 {
 	static t_buff	*beg;
@@ -89,8 +108,8 @@ int				get_next_line(const int fd, char **line)
 		j = ++buff->i;
 		while (buff->i < BUFF_SIZE && buff->val[buff->i] != '\n')
 			++buff->i;
-		*line = *line ? ft_strjoin(*line, ft_strsub(buff->val, j, buff->i - j))
-			: ft_strsub(buff->val, j, buff->i - j);
+		gnl_join(buff, line, j);
+		printf("i: %d, j: %d", buff->i, j);
 		if (buff->i != BUFF_SIZE)
 			return (1);
 		else if (ret != 0)
