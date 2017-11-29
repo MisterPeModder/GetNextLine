@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye44@gmail.com>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/19 13:35:48 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/24 01:15:37 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/29 15:18:34 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,10 @@ static t_buff	*gnl_buff(t_buff **beg, int fd)
 	buff->i = -1;
 	buff->next = NULL;
 	if (beg && *beg)
+	{
 		buff->next = *beg;
+		*beg = buff;
+	}
 	else
 		*beg = buff;
 	return (buff);
