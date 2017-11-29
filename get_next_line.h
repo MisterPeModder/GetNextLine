@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/17 12:59:21 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/24 00:59:20 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/29 14:37:16 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,6 @@ typedef struct		s_buff
 	struct s_buff	*next;
 }					t_buff;
 
-int		get_next_line(const int fd, char **line);
+int					get_next_line(const int fd, char **line);
 
 #endif
