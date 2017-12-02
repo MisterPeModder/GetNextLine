@@ -13,7 +13,8 @@
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
 
-# define BUFF_SIZE 42
+# define BUFF_SIZE 465
+# define REACHED_END(buff) (buff->i == buff->lsiz && buff->i < BUFF_SIZE)
 
 typedef struct		s_buff
 {

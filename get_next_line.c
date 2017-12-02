@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/30 14:46:00 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/30 15:11:44 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/01 17:16:55 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 #include "libft.h"
 #include <stdio.h>
 
-static t_buff	*gnl_buff(t_buff **beg, int fd)
+static t_buff    *gnl_buff(t_buff **beg, int fd)
 {
-	t_buff	*buff;
+	t_buff    *buff;
 
 	if (beg && *beg)
 	{
@@ -46,7 +46,7 @@ static t_buff	*gnl_buff(t_buff **beg, int fd)
 	return (buff);
 }
 
-static int		gnl_reset_or_read(t_buff *buff, int *ret, int fd, int sread)
+static int        gnl_reset_or_read(t_buff *buff, int *ret, int fd, int sread)
 {
 	if (sread)
 	{
@@ -57,19 +57,20 @@ static int		gnl_reset_or_read(t_buff *buff, int *ret, int fd, int sread)
 			buff->lsiz = *ret;
 		}
 	}
-	else
+	else if (!REACHED_END(buff))
 	{
 		while (buff->i > 0 && --buff->i >= 0)
 			buff->val[buff->i] = 0;
 		buff->i = -1;
 	}
-	return (0);
+	return (REACHED_END(buff));
 }
 
-static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
+static int        gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
 {
-	t_buff	*b;
+	t_buff    *b;
 
+	ret = REACHED_END(buff) ? 1 : ret;
 	if (*beg == buff)
 		ft_memdel((void **)beg);
 	else
@@ -86,40 +87,39 @@ static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
 	return (ret);
 }
 
-static void		gnl_join(t_buff *buff, char **line, int j)
+static void        gnl_join(t_buff *buff, char **line, int j)
 {
-	char	*nstr;
-	char	*tmp;
+	char    *nstr;
+	char    *tmp;
 
-	nstr = ft_strsub(buff->val, j, buff->i - j);
-	if (*line)
+	if (!(buff->lsiz == 1 && buff->val[0] == '\n'))
 	{
-		tmp = ft_strjoin(*line, nstr);
-		free(*line);
-		*line = tmp;
-		free(nstr);
+		nstr = ft_strsub(buff->val, j, buff->i - j);
+		if (*line)
+		{
+			tmp = ft_strjoin(*line, nstr);
+			free(*line);
+			*line = tmp;
+			free(nstr);
+		}
+		else
+			*line = nstr;
 	}
 	else
-		*line = nstr;
+	{
+		if (!*line)
+			*line = (char *)ft_memalloc(1);
+		gnl_reset_or_read(buff, 0, 0, 0);
+		//++buff->i;
+	}
 }
 
-static void		print_buff(char **line)
+int                get_next_line(const int fd, char **line)
 {
-	//	printf("\n/buff->lsiz: %d, buff->i: %d, j: %di $> ", buff->lsiz, buff->i, j);
-	printf("\e[90m%s\e[39m\n", *line);
-	/*while (j < buff->lsiz)
-	  {
-	  printf("%c", buff->val[j]);
-	  ++j;
-	  }*/
-}
-
-int				get_next_line(const int fd, char **line)
-{
-	static t_buff	*beg;
-	t_buff			*buff;
-	int				ret;
-	int				j;
+	static t_buff    *beg;
+	t_buff            *buff;
+	int                ret;
+	int                j;
 
 	if (!(buff = gnl_buff(&beg, fd)))
 		return (-1);
@@ -133,9 +133,7 @@ int				get_next_line(const int fd, char **line)
 		while (buff->i < buff->lsiz && buff->val[buff->i] != '\n')
 			++buff->i;
 		gnl_join(buff, line, j);
-		print_buff(line);
-		//printf("\e[90mi: %d, j: %d\n", buff->i, j);
-		if (buff->i != buff->lsiz)
+		if ((buff->lsiz == 1 && buff->val[0] == '\n') || buff->i != buff->lsiz)
 			return (1);
 		else if (ret != 0)
 			gnl_reset_or_read(buff, 0, 0, 0);
