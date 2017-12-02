@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/29 14:45:14 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/29 16:21:37 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/11/30 15:29:50 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "get_next_line.h"
+#include <stdlib.h>
 
 int		main(int argc, char **argv)
 {
@@ -36,6 +37,7 @@ int		main(int argc, char **argv)
 			++i;
 		}
 		c = 0;
+		int out = open("result.log", O_WRONLY | O_CREAT, 0640);
 		while (c < argc)
 		{
 			i = -1;
@@ -45,12 +47,15 @@ int		main(int argc, char **argv)
 				{
 					if (argc > 1)
 						printf("[%s]: ", argv[i]);
-					printf("%s\n", line);
+					printf("%s", line);
+					dprintf(out, "%s", line);
+                    free(line);
 				}
 				if (fds[i][1] != 1)
 					++c;
 			}
 		}
+		close(out);
 		i = -1;
 		while (++i < argc)
 		{
