@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/30 14:46:00 by yguaye            #+#    #+#             */
-/*   Updated: 2017/12/02 17:34:19 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/03 09:32:03 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,7 +116,7 @@ int				get_next_line(const int fd, char **line)
 	int				ret;
 	int				j;
 
-	if (!(buff = gnl_buff(&beg, fd)))
+	if (!line || !(buff = gnl_buff(&beg, fd)))
 		return (-1);
 	ret = 1;
 	*line = NULL;
