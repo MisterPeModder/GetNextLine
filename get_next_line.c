@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/30 14:46:00 by yguaye            #+#    #+#             */
-/*   Updated: 2017/12/03 10:43:41 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/03 10:44:43 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ static int        gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
 {
 	t_buff    *b;
 
-	ret = REACHED_END(buff) ? 1 : ret;
+	ret = REACHED_END(buff) ? 0 : ret;
 	if (*beg == buff)
 		ft_memdel((void **)beg);
 	else
