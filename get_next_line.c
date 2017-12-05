@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/30 14:46:00 by yguaye            #+#    #+#             */
-/*   Updated: 2017/12/03 10:33:51 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/05 14:14:55 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ static int		gnl_reset_or_read(t_buff *buff, int *ret, int fd, int sread)
 	{
 		if (buff->i == -1 || buff->i == 0)
 		{
+			ft_bzero(buff->val, BUFF_SIZE);
 			if ((*ret = read(fd, buff->val, BUFF_SIZE)) <= 0)
 				return (1);
 			buff->lsiz = *ret;
@@ -116,7 +117,8 @@ int				get_next_line(const int fd, char **line)
 	int				ret;
 	int				j;
 
-	if (!line || !(buff = gnl_buff(&beg, fd)))
+	if (fd < 0 || !line || BUFF_SIZE < 1 || BUFF_SIZE > 10000000 ||
+			!(buff = gnl_buff(&beg, fd)))
 		return (-1);
 	ret = 1;
 	*line = NULL;
