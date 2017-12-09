@@ -6,7 +6,7 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/29 14:45:14 by yguaye            #+#    #+#             */
-/*   Updated: 2017/12/03 10:58:19 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/09 12:05:21 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ int		main(int argc, char **argv)
 				{
 					if (argc > 1)
 						printf("[%s]: ", argv[i]);
-					printf("%s", line);
+					printf("%s\n", line);
 					dprintf(out, "%s\n", line);
 					free(line);
 				}
