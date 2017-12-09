@@ -5,23 +5,22 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2017/11/17 12:59:21 by yguaye            #+#    #+#             */
-/*   Updated: 2017/11/30 11:59:06 by yguaye           ###   ########.fr       */
+/*   Created: 2017/12/09 11:53:20 by yguaye            #+#    #+#             */
+/*   Updated: 2017/12/09 11:53:21 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
+# include "libft.h"
 
-# define BUFF_SIZE 465
-# define REACHED_END(buff) (buff->i == buff->lsiz && buff->i < BUFF_SIZE)
+# define BUFF_SIZE 42
 
 typedef struct		s_buff
 {
-	char			val[BUFF_SIZE];
-	int				i;
 	int				fd;
-	int				lsiz;
+	char			*pstr;
+	char			*str;
 	struct s_buff	*next;
 }					t_buff;
 
