@@ -6,124 +6,138 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/30 14:46:00 by yguaye            #+#    #+#             */
-/*   Updated: 2017/12/09 11:56:49 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/09 14:50:49 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "libft.h"
 #include "get_next_line.h"
-#include <stdlib.h>
 #include <unistd.h>
 
-static t_buff		*gnl_buff(t_buff **beg, int fd)
+static t_buff	*gnl_buff(t_list **lst, int fd)
 {
-	t_buff			*tmp;
+	t_buff	*gnl;
+	t_list	*temp;
 
-	tmp = *beg;
-	while (tmp)
+	temp = *lst;
+	while (temp)
 	{
-		if (tmp->fd == fd)
-			return (tmp);
-		tmp = tmp->next;
+		gnl = (t_buff *)(temp->content);
+		if (gnl->fd == fd)
+			return (gnl);
+		temp = temp->next;
 	}
-	if (!(tmp = (t_buff *)malloc(sizeof(t_buff))))
-		return (NULL);
-	tmp->fd = fd;
-	tmp->pstr = ft_strnew(0);
-	tmp->str = tmp->pstr;
-	tmp->next = NULL;
-	if (!*beg)
-		*beg = tmp;
-	else
-		tmp->next = *beg;
+	gnl = (t_buff *)ft_memalloc(sizeof(t_buff));
+	gnl->buf = ft_strnew(BUFF_SIZE);
+	gnl->count = BUFF_SIZE;
+	gnl->i = BUFF_SIZE;
+	gnl->fd = fd;
+	gnl->nl = 1;
+	temp = ft_lstnew(gnl, sizeof(t_buff));
+	ft_memdel((void **)&gnl);
+	ft_lstadd(lst, temp);
+	return ((t_buff *)(temp->content));
+}
+
+static char		*get_reminder(char **a, t_buff *gnl)
+{
+	int		i;
+	char	*rem;
+	char	*tmp;
+
+	i = 0;
+	gnl->nl = 0;
+	while (gnl->i + i < gnl->count)
+	{
+		if (gnl->buf[gnl->i + i] == '\n')
+		{
+			gnl->nl = 1;
+			i++;
+			break ;
+		}
+		i++;
+	}
+	gnl->i += i;
+	rem = ft_strsub(gnl->buf, gnl->i - i, i - gnl->nl);
+	tmp = ft_strjoin(*a, rem);
+	ft_strdel(a);
+	ft_strdel(&rem);
 	return (tmp);
 }
 
-static int			gnl_copy_until_nl(char **dst, char *src)
+static int		gnl_free(t_list **lst, int fd, char **str)
 {
-	int				i;
-	int				pos;
+	t_buff	*gnl;
+	t_list	**temp;
+	t_list	*ptr;
 
-	i = 0;
-	while (src[i] && src[i] != '\n')
-		++i;
-	if (!(*dst = ft_strnew(i)))
-		return (0);
-	pos = -1;
-	while (++pos < i)
-		(*dst)[pos] = src[pos];
-	return (pos);
+	temp = lst;
+	while (*temp)
+	{
+		gnl = (t_buff *)((*temp)->content);
+		if (gnl->fd == fd)
+			break ;
+		*temp = ((*temp)->next);
+	}
+	if (*temp)
+	{
+		ptr = (*temp)->next;
+		ft_strdel(&(gnl->buf));
+		ft_memdel((void **)&gnl);
+		ft_memdel((void **)temp);
+		*temp = ptr;
+	}
+	ft_strdel(str);
+	return (0);
 }
 
-static int			gnl_free_buff(t_buff **beg, t_buff *buff)
+static int		gnl_check(t_buff *gnl, t_list **lst, char **temp, char **line)
 {
-	t_buff			*b;
-
-	if (*beg == buff)
+	if (gnl->i == gnl->count)
 	{
-		ft_memdel((void **)&(*beg)->pstr);
-		(*beg)->str = NULL;
-		ft_memdel((void **)beg);
-	}
-	else
-	{
-		b = *beg;
-		while (b->next && b->next != buff)
-			b = b->next;
-		if (b->next == buff)
+		gnl->count = read(gnl->fd, gnl->buf, BUFF_SIZE);
+		if (gnl->count == -1)
 		{
-			b->next = buff->next;
-			ft_memdel((void **)&buff->pstr);
-			buff->str = NULL;
-			ft_memdel((void **)buff);
+			gnl_free(lst, gnl->fd, temp);
+			return (-1);
+		}
+		gnl->i = 0;
+		if (gnl->count == 0)
+		{
+			if (gnl->nl == 0)
+			{
+				*line = *temp;
+				return (1);
+			}
 		}
 	}
 	return (0);
 }
 
-static char			*gnl_join(t_buff *curr, char *buf)
+int				get_next_line(int const fd, char **line)
 {
+	static t_list	*lst;
+	t_buff			*gnl;
 	char			*tmp;
-
-	if (!ft_strlen(curr->str))
-	{
-		ft_memdel((void **)&curr->pstr);
-		curr->pstr = ft_strdup(buf);
-		curr->str = curr->pstr;
-	}
-	else
-	{
-		tmp = ft_strjoin(curr->str, buf);
-		ft_memdel((void **)&curr->pstr);
-		curr->pstr = tmp;
-		curr->str = curr->pstr;
-	}
-	return (curr->str);
-}
-
-int					get_next_line(const int fd, char **line)
-{
-	char			buf[BUFF_SIZE + 1];
-	static t_buff	*beg;
-	int				i;
 	int				ret;
-	t_buff			*curr;
 
-	if ((fd < 0 || line == NULL || read(fd, buf, 0) < 0))
+	if (fd < 0 || line == NULL)
 		return (-1);
-	curr = gnl_buff(&beg, fd);
-	while ((ret = read(fd, buf, BUFF_SIZE)))
+	gnl = gnl_buff(&lst, fd);
+	tmp = ft_strnew(0);
+	while (gnl->count > 0)
 	{
-		buf[ret] = '\0';
-		if (!gnl_join(curr, buf))
-			return (-1);
-		if (ft_strchr(buf, '\n'))
-			break ;
+		if ((ret = gnl_check(gnl, &lst, &tmp, line)) != 0)
+			return (ret);
+		while (gnl->i < gnl->count)
+		{
+			tmp = get_reminder(&tmp, gnl);
+			if (gnl->nl)
+			{
+				*line = tmp;
+				return (1);
+			}
+		}
 	}
-	if (ret < BUFF_SIZE && !ft_strlen(curr->str))
-		return (gnl_free_buff(&beg, curr));
-	i = gnl_copy_until_nl(line, curr->str);
-	(i < (int)ft_strlen(curr->str))
-		? curr->str += (i + 1)
-		: ft_strclr(curr->str);
-	return (1);
+	return (gnl_free(&lst, fd, &tmp));
 }
