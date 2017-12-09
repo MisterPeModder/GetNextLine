@@ -6,70 +6,64 @@
 /*   By: yguaye <yguaye@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/30 14:46:00 by yguaye            #+#    #+#             */
-/*   Updated: 2017/12/03 15:00:01 by yguaye           ###   ########.fr       */
+/*   Updated: 2017/12/09 11:56:49 by yguaye           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-#include <stdlib.h>
 #include "get_next_line.h"
-#include "libft.h"
-#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-static t_buff	*gnl_buff(t_buff **beg, int fd)
+static t_buff		*gnl_buff(t_buff **beg, int fd)
 {
-	t_buff	*buff;
+	t_buff			*tmp;
 
-	if (beg && *beg)
+	tmp = *beg;
+	while (tmp)
 	{
-		buff = *beg;
-		while (buff)
-		{
-			if (buff->fd == fd)
-				return (buff);
-			buff = buff->next;
-		}
+		if (tmp->fd == fd)
+			return (tmp);
+		tmp = tmp->next;
 	}
-	if (!(buff = (t_buff *)malloc(sizeof(t_buff))))
+	if (!(tmp = (t_buff *)malloc(sizeof(t_buff))))
 		return (NULL);
-	buff->fd = fd;
-	buff->i = -1;
-	buff->lsiz = 0;
-	buff->next = NULL;
-	if (beg && *beg)
-		buff->next = *beg;
-	*beg = buff;
-	return (buff);
+	tmp->fd = fd;
+	tmp->pstr = ft_strnew(0);
+	tmp->str = tmp->pstr;
+	tmp->next = NULL;
+	if (!*beg)
+		*beg = tmp;
+	else
+		tmp->next = *beg;
+	return (tmp);
 }
 
-static int		gnl_reset_or_read(t_buff *buff, int *ret, int fd, int sread)
+static int			gnl_copy_until_nl(char **dst, char *src)
 {
-	if (sread)
-	{
-		if (buff->i == -1 || buff->i == 0)
-		{
-			ft_bzero(buff->val, BUFF_SIZE);
-			if ((*ret = read(fd, buff->val, BUFF_SIZE)) <= 0)
-				return (1);
-			buff->lsiz = *ret;
-		}
-	}
-	else if (!REACHED_END(buff))
-	{
-		while (buff->i > 0 && --buff->i >= 0)
-			buff->val[buff->i] = 0;
-		buff->i = -1;
-	}
-	return (REACHED_END(buff));
+	int				i;
+	int				pos;
+
+	i = 0;
+	while (src[i] && src[i] != '\n')
+		++i;
+	if (!(*dst = ft_strnew(i)))
+		return (0);
+	pos = -1;
+	while (++pos < i)
+		(*dst)[pos] = src[pos];
+	return (pos);
 }
 
-static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
+static int			gnl_free_buff(t_buff **beg, t_buff *buff)
 {
-	t_buff	*b;
+	t_buff			*b;
 
-	ret = REACHED_END(buff) ? 0 : ret;
 	if (*beg == buff)
+	{
+		ft_memdel((void **)&(*beg)->pstr);
+		(*beg)->str = NULL;
 		ft_memdel((void **)beg);
+	}
 	else
 	{
 		b = *beg;
@@ -78,62 +72,58 @@ static int		gnl_free_buff(int ret, t_buff **beg, t_buff *buff)
 		if (b->next == buff)
 		{
 			b->next = buff->next;
-			free(buff);
+			ft_memdel((void **)&buff->pstr);
+			buff->str = NULL;
+			ft_memdel((void **)buff);
 		}
 	}
-	return (ret);
+	return (0);
 }
 
-static void		gnl_join(t_buff *buff, char **line, int j)
+static char			*gnl_join(t_buff *curr, char *buf)
 {
-	char	*nstr;
-	char	*tmp;
+	char			*tmp;
 
-	if (!(buff->lsiz == 1 && buff->val[0] == '\n'))
+	if (!ft_strlen(curr->str))
 	{
-		nstr = ft_strsub(buff->val, j, buff->i - j);
-		if (*line)
-		{
-			tmp = ft_strjoin(*line, nstr);
-			free(*line);
-			*line = tmp;
-			free(nstr);
-		}
-		else
-			*line = nstr;
+		ft_memdel((void **)&curr->pstr);
+		curr->pstr = ft_strdup(buf);
+		curr->str = curr->pstr;
 	}
 	else
 	{
-		if (!*line)
-			*line = (char *)ft_memalloc(1);
-		gnl_reset_or_read(buff, 0, 0, 0);
+		tmp = ft_strjoin(curr->str, buf);
+		ft_memdel((void **)&curr->pstr);
+		curr->pstr = tmp;
+		curr->str = curr->pstr;
 	}
+	return (curr->str);
 }
 
-int				get_next_line(const int fd, char **line)
+int					get_next_line(const int fd, char **line)
 {
+	char			buf[BUFF_SIZE + 1];
 	static t_buff	*beg;
-	t_buff			*buff;
+	int				i;
 	int				ret;
-	int				j;
+	t_buff			*curr;
 
-	if (fd < 0 || !line || BUFF_SIZE < 1 || BUFF_SIZE > 10000000 ||
-			!(buff = gnl_buff(&beg, fd)))
+	if ((fd < 0 || line == NULL || read(fd, buf, 0) < 0))
 		return (-1);
-	ret = 1;
-	*line = NULL;
-	while (buff->i != BUFF_SIZE)
+	curr = gnl_buff(&beg, fd);
+	while ((ret = read(fd, buf, BUFF_SIZE)))
 	{
-		if (gnl_reset_or_read(buff, &ret, fd, 1))
+		buf[ret] = '\0';
+		if (!gnl_join(curr, buf))
+			return (-1);
+		if (ft_strchr(buf, '\n'))
 			break ;
-		j = ++buff->i;
-		while (buff->i < buff->lsiz && buff->val[buff->i] != '\n')
-			++buff->i;
-		gnl_join(buff, line, j);
-		if ((buff->lsiz == 1 && buff->val[0] == '\n') || buff->i != buff->lsiz)
-			return (1);
-		else if (ret != 0)
-			gnl_reset_or_read(buff, 0, 0, 0);
 	}
-	return (gnl_free_buff(ret, &beg, buff));
+	if (ret < BUFF_SIZE && !ft_strlen(curr->str))
+		return (gnl_free_buff(&beg, curr));
+	i = gnl_copy_until_nl(line, curr->str);
+	(i < (int)ft_strlen(curr->str))
+		? curr->str += (i + 1)
+		: ft_strclr(curr->str);
+	return (1);
 }
